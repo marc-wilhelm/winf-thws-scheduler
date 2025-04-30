@@ -18,6 +18,8 @@ Das Frontend ist verfügbar unter: [https://marc-wilhelm.github.io/winf-thws-sch
 
 Der Service funktioniert nur, wenn die dahinterliegende Azure Functions-App aktiv und die GitHub Page live ist.
 
+Das Web-scraping ist nicht fehlerfrei, funktioniert allerdings für die meisten Studiengänge und Vorlesungen.
+
 ## API-Dokumentation
 
 Das Frontend kommuniziert mit dem Backend über verschiedene API-Endpunkte.
