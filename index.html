@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THWS Scheduler</title>
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FullCalendar für Kalenderansicht -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/main.min.css" rel="stylesheet">
+    <!-- JavaScript-Dateien - Achtung: Reihenfolge ist wichtig -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/main.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+<!-- Background Animation -->
+<div class="background-container">
+    <div class="bg-gradient"></div>
+</div>
+
+<!-- Login Container (initial view) -->
+<div id="login-container" class="login-container">
+    <div class="login-card">
+        <div class="logo-container">
+            <div class="logo-animation">THWS Scheduler</div>
+        </div>
+        <h2>Mit Account anmelden</h2>
+
+        <div id="login-error" class="error-message" style="display: none;"></div>
+
+        <div class="login-form">
+            <!-- Benutzername mit Floating Label -->
+            <div class="form-floating mb-3">
+                <input type="text" id="username" name="username" class="form-control" placeholder="Benutzername">
+            </div>
+            <p></p>
+            <!-- Passwort mit Floating Label -->
+            <div class="form-floating">
+                <input type="password" id="password" name="password" class="form-control" placeholder="Passwort">
+            </div>
+            <p></p>
+            <button id="login-button" class="login-button">Anmelden</button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Application (initially hidden) -->
+<div id="app-container" class="app-container" style="display: none;">
+    <!-- Navigation Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="logo-animation">THWS Scheduler</div>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-section="schedule">Vorlesungspläne</a></li>
+                    <li><a href="#" class="nav-link" data-section="calendar">Kalenderansicht</a></li>
+                </ul>
+            </nav>
+            <div class="user-controls">
+                <span id="logged-in-user">-</span>
+                <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Menü öffnen">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar für Account-Verwaltung -->
+    <div id="account-sidebar" class="account-sidebar">
+        <div class="sidebar-header">
+            <h3>Benutzerkonto</h3>
+            <button id="close-sidebar" class="close-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="user-info">
+                <div class="avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <strong id="sidebar-username">-</strong>
+                </div>
+            </div>
+
+            <div class="sidebar-options">
+                <button id="theme-toggle" class="sidebar-btn">
+                    <i class="fas fa-moon"></i>
+                    Dark Mode
+                </button>
+
+                <button id="about-btn" class="sidebar-btn">
+                    <i class="fas fa-info-circle"></i>
+                    About THWS Scheduler
+                </button>
+
+                <button id="logout-button" class="sidebar-btn logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Abmelden
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>About THWS Scheduler</h2>
+                <button id="close-about" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p>Der "THWS Scheduler" ist ein Tool zum einfachen Abrufen und Verwalten von Vorlesungsplänen der Technischen Hochschule Würzburg-Schweinfurt.</p>
+
+                <br></br>
+
+                <h3>Funktionen</h3>
+                <ul>
+                    <li>Abrufen von Vorlesungsplänen anhand von Studiengang, Semester und Modulen</li>
+                    <li>Export der Pläne in verschiedenen Formaten (JSON, CSV, ICS)</li>
+                    <li>Zusätzliche Kalenderansicht, welche CSV Import unterstützt.</li>
+                </ul>
+
+                <br></br>
+
+                <h3>Technologien</h3>
+                <p>Frontend: HTML, CSS, JavaScript</p>
+                <p>Backend: Azure Functions, Python</p>
+
+                <br></br>
+
+                <div class="disclaimer">
+                    <p>Dieses Projekt ist rein privat und steht in keiner Verbindung zur THWS oder Dritten. Alle Marken- und Namensrechte verbleiben bei ihren jeweiligen Eigentümern.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Sections -->
+    <main class="main-content">
+        <!-- Schedule Section -->
+        <section id="schedule-section" class="content-section active">
+            <div class="container">
+                <div class="content-card">
+                    <h2>Vorlesungspläne abrufen und exportieren</h2>
+
+                    <div class="metadata-loading" id="metadata-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Lade Studiengangsinformationen...</p>
+                    </div>
+
+                    <div id="semester-info-card" class="semester-info-card" style="display: none;">
+                        <h3>Semester-Informationen</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Aktuelles Semester:</span>
+                                <span id="current-semester" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Zeitraum:</span>
+                                <span id="semester-timespan" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Letzte Aktualisierung:</span>
+                                <span id="last-updated" class="info-value">-</span>
+                            </div>
+                            <button id="refresh-metadata" class="refresh-btn">
+                                <i class="fas fa-sync-alt"></i>
+                                Aktualisieren
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="plan-configuration" style="display: none;">
+                        <div class="plan-configs" id="plan-configs">
+                            <!-- Plan configuration items will be added here -->
+                            <!--- <div class="plan-config-item" data-config-id="0">
+                                <div class="config-header">
+                                    <h3>Konfiguration #1</h3>
+                                    <button class="remove-config-btn" data-config-id="0" style="display: none;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="studiengang-0">Studiengang:</label>
+                                        <select id="studiengang-0" class="studiengang-select">
+                                            <option value="">Bitte wählen...</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="semester-0">Semester:</label>
+                                        <select id="semester-0" class="semester-select" disabled>
+                                            <option value="">Bitte wählen...</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="group-0">Gruppe (optional):</label>
+                                        <select id="group-0" class="group-select" disabled>
+                                            <option value="">Alle Gruppen</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group module-group">
+                                        <label for="modules-0">Module:</label>
+                                        <div class="select-wrapper">
+                                            <select id="modules-0" class="modules-select" multiple disabled>
+                                                <option value="">Bitte wählen...</option>
+                                            </select>
+                                        </div>
+                                        <div class="module-controls">
+                                            <button class="select-all-btn" data-select-id="modules-0" disabled>Alle</button>
+                                            <button class="deselect-all-btn" data-select-id="modules-0" disabled>Keine</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div> --->
+                            </div>
+
+                            <div class="action-buttons">
+                                <button id="add-config-btn" class="action-button secondary">
+                                    <i class="fas fa-plus"></i> Konfiguration hinzufügen
+                                </button>
+                                <p></p>
+                                <button id="execute-btn" class="action-button primary" disabled>
+                                    <i class="fas fa-calendar-check"></i> Vorlesungsplan abrufen
+                                </button>
+                                <p></p>
+                                <button id="reset-configs-btn" class="action-button warning">
+                                    <i class="fas fa-undo"></i> Zurücksetzen
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Results Section (initially hidden) -->
+                    <div id="results-section" class="results-section" style="display: none;">
+                        <div class="results-header">
+                            <h3>Ergebnisse</h3>
+                            <div class="result-actions">
+                                <button id="new-search-btn" class="action-button secondary">
+                                    <i class="fas fa-search"></i> Neue Suche
+                                </button>
+                                <div class="download-group">
+                                    <button id="download-dropdown-btn" class="action-button primary">
+                                        <i class="fas fa-download"></i> Herunterladen
+                                        <i class="fas fa-caret-down"></i>
+                                    </button>
+                                    <div class="download-dropdown">
+                                        <a href="#" id="download-json">JSON Format</a>
+                                        <a href="#" id="download-csv">CSV Format</a>
+                                        <a href="#" id="download-ics">ICS (Kalender)</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="results-preview">
+                            <div class="result-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value" id="event-count">0</span>
+                                    <span class="stat-label">Veranstaltungen</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="day-count">0</span>
+                                    <span class="stat-label">Tage</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" id="module-count">0</span>
+                                    <span class="stat-label">Module</span>
+                                </div>
+                            </div>
+
+                            <div class="results-table-wrapper">
+                                <table class="results-table" id="results-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Zeit</th>
+                                        <th>Modul</th>
+                                        <th>Titel</th>
+                                        <th>Dozent</th>
+                                        <th>Raum</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="results-body">
+                                    <!-- Results will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Lade Vorlesungsdaten...</p>
+                    </div>
+
+                    <!-- Error Display -->
+                    <div id="error-display" class="error-display" style="display: none;">
+                        <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <h3>Fehler beim Laden der Daten</h3>
+                        <div class="error-text">
+                            <p id="error-message">Es ist ein unerwarteter Fehler aufgetreten.</p>
+                        </div>
+                        <button id="error-retry-btn" class="action-button primary">Erneut versuchen</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Calendar Section -->
+        <section id="calendar-section" class="content-section">
+            <div class="container">
+                <div class="content-card">
+                    <h2>Kalenderansicht</h2>
+
+                    <div class="calendar-controls">
+                        <div class="file-upload-container">
+                            <label for="calendar-file-upload" class="file-upload-label">
+                                <i class="fas fa-file-upload"></i> CSV-Datei hochladen
+                            </label>
+                            <input type="file" id="calendar-file-upload" accept=".csv" style="display: none;">
+                            <span id="file-name" class="file-name">Keine Datei ausgewählt</span>
+                        </div>
+                        <div class="csv-import-hint">
+                            <p>Hinweis: CSV-Dateien müssen folgende Spalten enthalten: Datum, Start, Ende, Fach, Titel, Dozent, Raum</p>
+                        </div>
+
+                        <div class="calendar-view-controls">
+                            <button id="calendar-view-month" class="view-btn active">Monatsansicht</button>
+                            <button id="calendar-view-week" class="view-btn">Wochenansicht</button>
+                            <button id="calendar-view-day" class="view-btn">Tagesansicht</button>
+                        </div>
+
+                        <button id="clear-calendar-btn" class="action-button warning" disabled>
+                            <i class="fas fa-trash-alt"></i> Kalender leeren
+                        </button>
+                    </div>
+
+                    <div id="calendar-container" class="calendar-container">
+                        <!-- FullCalendar will be initialized here -->
+                    </div>
+
+                    <!-- No Data Display -->
+                    <div id="calendar-no-data" class="no-data-display">
+                        <div class="no-data-icon"><i class="fas fa-calendar-times"></i></div>
+                        <h3>Keine Kalenderdaten</h3>
+                        <div class="no-data-text">
+                            <p>Bitte lade eine CSV-Datei hoch, um den Kalender anzuzeigen.</p>
+                            <p class="small-text">Unterstütztes Format: CSV</p>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Loading Indicator -->
+                    <div id="calendar-loading" class="loading-indicator" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Lade Kalenderdaten...</p>
+                    </div>
+
+                    <!-- Calendar Error Display -->
+                    <div id="calendar-error" class="error-display" style="display: none;">
+                        <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <h3>Fehler beim Laden der Kalenderdaten</h3>
+                        <p id="calendar-error-message">Die Datei konnte nicht gelesen werden.</p>
+                        <button id="calendar-retry-btn" class="action-button primary">Erneut versuchen</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>THWS Scheduler &copy; 2025</p>
+                    <p class="disclaimer">Dieses Projekt ist rein privat und steht in keiner Verbindung zur THWS oder Dritten. Alle Marken- und Namensrechte verbleiben bei ihren jeweiligen Eigentümern.</p>
+                </div>
+                <div class="github-link">
+                    <a href="https://github.com/marc-wilhelm" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-github"></i>
+                        GitHub: marc-wilhelm
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Scripts - Wichtig: Reihenfolge beachten! -->
+<script src="js/app.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>

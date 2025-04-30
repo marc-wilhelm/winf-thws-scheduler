@@ -1,0 +1,38 @@
+# Abhängigkeiten
+node_modules/
+/dist
+/build
+
+# IDE-spezifische Dateien
+.idea/
+.vscode/
+*.sublime-*
+.DS_Store
+
+# Umgebungsvariablen und Konfiguration
+.env
+.env.local
+config.local.js
+
+# Log-Dateien
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Temporäre Dateien
+.tmp/
+.temp/
+*.swp
+*.swo
+
+# Generierte Dateien
+dist/
+build/
+coverage/
+.cache/
+
+# OS-generierte Dateien
+.DS_Store
+Thumbs.db
