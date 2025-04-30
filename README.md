@@ -18,8 +18,6 @@ Das Frontend ist verfügbar unter: [https://marc-wilhelm.github.io/winf-thws-sch
 
 Der Service funktioniert nur, wenn die dahinterliegende Azure Functions-App aktiv und die GitHub Page live ist.
 
----
-
 ## API-Dokumentation
 
 Das Frontend kommuniziert mit dem Backend über verschiedene API-Endpunkte.
