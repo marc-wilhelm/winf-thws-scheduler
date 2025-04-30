@@ -46,7 +46,7 @@ Das Frontend kommuniziert mit dem Backend über verschiedene API-Endpunkte.
 
 **Endpunkt:** [https://thws-scheduler.azurewebsites.net/api/course_scraper](https://thws-scheduler.azurewebsites.net/api/course_scraper)
 
-**GET Request (nur Header, kein Body):**
+**GET Request (nur Header):**
 ```json
 {
   "Authorization": "Bearer token"
@@ -101,7 +101,7 @@ Das Frontend kommuniziert mit dem Backend über verschiedene API-Endpunkte.
 
 **Endpunkt:** [https://thws-scheduler.azurewebsites.net/api/schedule_scraper](https://thws-scheduler.azurewebsites.net/api/schedule_scraper)
 
-**GET Request mit Header:**
+**GET Request:**
 ```json
 {
   "plans": [
